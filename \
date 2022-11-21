@@ -142,7 +142,7 @@ impl Component for MainPageComponent {
         html! {
             <div>
                 <NavComponent/>
-                // <CounterComponent/>
+                <CounterComponent/>
                 <RsaComponent/>
             </div>
         }
@@ -154,8 +154,7 @@ fn main() {
 enum RsaMsg {
     N(u32),
     E(u32),
-    UpdateN(u32),
-    UpdateE(u32),
+    UpdateN(String),
 }
 struct RsaComponent {
     n: u32,
@@ -176,8 +175,7 @@ impl Component for RsaComponent {
     }
     fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
-            RsaMsg::UpdateN(content) => self.n = content,
-            RsaMsg::UpdateE(content) => self.e = content,
+            RsaMsg::UpdateN(content) => self.n = content.parse::<u32>().unwrap(),
             _ => (),
         }
         true
@@ -185,21 +183,16 @@ impl Component for RsaComponent {
     fn view(&self, ctx: &Context<Self>) -> Html {
         let link = ctx.link();
         html! {
-            <div class="RSA">
-                <div class="row">
-                    <div class="indicator">
-                        <p>{"N: "}</p>
-                        <p>{self.n}</p>
-                    </div>
-                    <div class="indicator">
-                        <p>{"E: "}</p>
-                        <p>{self.e}</p>
-                    </div>
+            <div>
+                <div class="indicator">
+                    <p>{"N: "}</p>
+                    <p>{self.n}</p>
                 </div>
-                <div class = "row">
-                    <input type="number" oninput={link.callback(|event:InputEvent| RsaMsg::UpdateN(event.data().unwrap().parse::<u32>().unwrap()))}/>
-                    <input type="number" oninput={link.callback(|event:InputEvent| RsaMsg::UpdateE(event.data().unwrap().parse::<u32>().unwrap()))}/>
-                </div>
+                <checkbox onclick={link.callback(|_|RsaMsg::N(3))}>{"+1"}</checkbox>
+                <textarea
+                    oninput={link.callback(|event:InputEvent| RsaMsg::UpdateN(event.data()?))}
+                    value={self.n.to_string()}>
+                </textarea>
             </div>
         }
     }
