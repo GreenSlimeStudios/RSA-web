@@ -151,7 +151,7 @@ impl Component for RsaComponent {
         html! {
             <div class="RSA">
                 <p class="title">{"SZYFROWANIE"}</p>
-                <div class="row">
+                <div class="row nums">
                     <div class="indicator">
                         <p>{"N:"}</p>
                         <p>{self.n}</p>
