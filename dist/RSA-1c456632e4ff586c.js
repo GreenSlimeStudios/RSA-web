@@ -487,7 +487,7 @@ function getImports() {
     imports.wbg.__wbindgen_throw = function(arg0, arg1) {
         throw new Error(getStringFromWasm0(arg0, arg1));
     };
-    imports.wbg.__wbindgen_closure_wrapper2291 = function(arg0, arg1, arg2) {
+    imports.wbg.__wbindgen_closure_wrapper2256 = function(arg0, arg1, arg2) {
         const ret = makeClosure(arg0, arg1, 154, __wbg_adapter_18);
         return addHeapObject(ret);
     };
@@ -527,7 +527,7 @@ function initSync(module) {
 
 async function init(input) {
     if (typeof input === 'undefined') {
-        input = new URL('RSA-db93ea1b2ce8c435_bg.wasm', import.meta.url);
+        input = new URL('RSA-1c456632e4ff586c_bg.wasm', import.meta.url);
     }
     const imports = getImports();
 

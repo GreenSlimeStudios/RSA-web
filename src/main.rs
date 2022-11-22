@@ -90,10 +90,6 @@ impl Component for CounterComponent {
         true
     }
 
-    // fn rendered(&mut self, ctx: &Context<Self>, first_render: bool) {}
-
-    // fn destroy(&mut self, ctx: &Context<Self>) {}
-
     fn view(&self, ctx: &Context<Self>) -> Html {
         let link = ctx.link();
         html! {
@@ -123,7 +119,6 @@ impl Component for NavComponent {
             <div>
                 <div class="navbar">
                     <p class="logotext">{"RSA WASM"}</p>
-                    <img src="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fi.redd.it%2Fntpsyag1d3p61.jpg&f=1&nofb=1&ipt=8453c0e8d59a49cb045a525913b2904cebb0ea3177eb7ca5d5e503cd03619b0d&ipo=images" alt="karpportal logo"/>
                 </div>
             </div>
         }
@@ -151,12 +146,9 @@ impl Component for MainPageComponent {
     }
 }
 fn main() {
-    // println!("{:?}", encrypt("TAJNE!".to_string(), 187, 3));
     yew::start_app::<MainPageComponent>();
 }
 enum RsaMsg {
-    // N(u32),
-    // E(u32),
     UpdateN(u32),
     UpdateE(u32),
     UpdateMessage(String),
@@ -166,8 +158,10 @@ struct RsaComponent {
     n: u32,
     e: u32,
     message: String,
-    nums: Vec<u32>, // phi: u32,
-                    // l: u32,
+    nums: Vec<u32>,
+    encrypted_message: String,
+    // phi: u32,
+    // l: u32,
 }
 impl Component for RsaComponent {
     type Message = RsaMsg;
@@ -178,8 +172,8 @@ impl Component for RsaComponent {
             n: 0,
             e: 0,
             message: String::new(),
-            // nums: vec![1, 2, 3, 4, 5],
-            nums: Vec::new(), // l: 1,
+            encrypted_message: String::new(),
+            nums: Vec::new(),
         }
     }
     fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
@@ -187,7 +181,10 @@ impl Component for RsaComponent {
             RsaMsg::UpdateN(content) => self.n = content,
             RsaMsg::UpdateE(content) => self.e = content,
             RsaMsg::UpdateMessage(content) => self.message = content,
-            RsaMsg::Encrypt => self.nums = encrypt(self.message.clone(), self.n, self.e),
+            RsaMsg::Encrypt => {
+                self.nums = encrypt(self.message.clone(), self.n, self.e);
+                self.encrypted_message = refactor(&self.nums);
+            }
             _ => (),
         }
         true
@@ -196,33 +193,44 @@ impl Component for RsaComponent {
         let link = ctx.link();
         html! {
             <div class="RSA">
+                <p class="title">{"SZYFROWANIE"}</p>
                 <div class="row">
                     <div class="indicator">
-                        <p>{"N: "}</p>
+                        <p>{"N:"}</p>
                         <p>{self.n}</p>
                     </div>
                     <div class="indicator">
-                        <p>{"E: "}</p>
+                        <p>{"E:"}</p>
                         <p>{self.e}</p>
                     </div>
                 </div>
+
                 <div class = "row">
-                    <input type="number" placeholder="enter N" onchange={link.callback(|event:Event| RsaMsg::UpdateN(event.target().unwrap().unchecked_into::<HtmlInputElement>().value().parse::<u32>().unwrap()))}/>
-                    <input type="number" placeholder="enter E" onchange={link.callback(|event:Event| RsaMsg::UpdateE(event.target().unwrap().unchecked_into::<HtmlInputElement>().value().parse::<u32>().unwrap()))}/>
-                    <input type="text" placeholder="enter secret message" onchange={link.callback(|event:Event| RsaMsg::UpdateMessage(event.target().unwrap().unchecked_into::<HtmlInputElement>().value()))}/>
+                    <p>{"N"}</p>
+                    <input type="number" class="number-input" placeholder="enter N" onchange={link.callback(|event:Event| RsaMsg::UpdateN(event.target().unwrap().unchecked_into::<HtmlInputElement>().value().parse::<u32>().unwrap()))}/>
+                    <p>{"E"}</p>
+                    <input type="number" class="number-input" placeholder="enter E" onchange={link.callback(|event:Event| RsaMsg::UpdateE(event.target().unwrap().unchecked_into::<HtmlInputElement>().value().parse::<u32>().unwrap()))}/>
                 </div>
+                    <input type="text" class="text-input" placeholder="enter secret message" onchange={link.callback(|event:Event| RsaMsg::UpdateMessage(event.target().unwrap().unchecked_into::<HtmlInputElement>().value()))}/>
                 <button onclick={link.callback(|_|RsaMsg::Encrypt)}>{"ENCRYPT"}</button>
-                <p>{self.nums.clone()}</p>
+                <p>{self.encrypted_message.clone()}</p>
             </div>
         }
     }
 }
+
+fn refactor(nums: &[u32]) -> String {
+    let mut message = String::new();
+    for num in nums {
+        message += num.to_string().as_str();
+        message += " ";
+    }
+    message
+}
 fn encrypt(text: String, n: u32, e: u32) -> Vec<u32> {
     let mut nums: Vec<u32> = Vec::new();
-    // nums.push(69);
     for letter in text.chars() {
         let d = ((letter as u32).pow(e)) % n;
-        // println!("{} - {}", letter, d);
         nums.push(d);
     }
     nums

@@ -1,11 +1,13 @@
 body{
 	margin: 0px;
 	padding: 0px;
+	background-color: rgb(20,20,20);
+	color: white;
 }
 .container {
     width: 100%;
     height: 100%;
-    padding: 30px;
+    /* padding: 30px; */
     display: flex;
     box-sizing: border-box;
     flex-direction: column;
@@ -17,12 +19,24 @@ body{
 }
 
 button{
-	background-color: blue;
+	background-color: #ff8100;
+	height: 34px;
+	font-size: 16px;
+	/* text-decoration-color:white; */
+	/* color: white; */
+	border-color: white;
+	padding: 2px;
+	padding-left: 10px;
+	padding-right: 10px;
+	border-radius: 10px;
+	font-weight:bold;
+}
+input{
 	height: 30px;
-	font-size: 20px;
-	text-decoration-color:white;
-	color: white;
-	border-color: black;
+	font-size: 15px;
+	padding-left: 10px;
+	border-radius: 10px;
+	border-color: #ff8100;
 }
 
 .navbar{
@@ -37,7 +51,7 @@ button{
 	/* border-bottom: solid 2px rgba(255,255,255,1); */
 }
 .navbar:hover:before{
-	width: 20px;
+	width: 50px;
 	transition: width ease 600ms;
 }
 .navbar:before{
@@ -48,7 +62,7 @@ button{
 	);
 	z-index: 0;
 	position: absolute;
-	height: 50px;
+	height: 45px;
 	top: 0px;
 	left: 0px;
 	width: 100%;
@@ -56,7 +70,11 @@ button{
 	transition: width 600ms ease;
 }
 
-
+.title{
+	font-size: 30px;
+	font-weight:bold;
+	margin-bottom: 20px;
+}
 .logotext{
 	margin: 0px;
 	/* text-align: center; */
@@ -69,18 +87,20 @@ button{
  height: 40px;
 }
 .row{
-	margin: 10px;	
 	display: flex;
 	flex-direction: right;
 	font-size: 30px;
 	gap: 20px;
+	margin-bottom: 20px;
+	margin-top: 20px;
+}
+.row p{
+	margin: 0px;
 }
 .indicator{
-	margin: 10px;	
 	display: flex;
 	flex-direction: right;
 	font-size: 30px;
-	/* text-align: center; */
 }
 .RSA{
 	margin-top:0px;
@@ -89,4 +109,11 @@ button{
 	align-items: center;
 	margin-left: 50px;
 	margin-right: 50px;
+}
+.number-input{
+	width: 100px;
+}
+.text-input{
+	margin-right: 20px;
+	width: 400px;
 }
