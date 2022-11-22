@@ -372,13 +372,6 @@ function getImports() {
         const ret = getObject(arg0).removeChild(getObject(arg1));
         return addHeapObject(ret);
     }, arguments) };
-    imports.wbg.__wbg_data_09be142f1f5736a0 = function(arg0, arg1) {
-        const ret = getObject(arg1).data;
-        var ptr0 = isLikeNone(ret) ? 0 : passStringToWasm0(ret, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-        var len0 = WASM_VECTOR_LEN;
-        getInt32Memory0()[arg0 / 4 + 1] = len0;
-        getInt32Memory0()[arg0 / 4 + 0] = ptr0;
-    };
     imports.wbg.__wbg_instanceof_Element_33bd126d58f2021b = function(arg0) {
         let result;
         try {
@@ -494,8 +487,8 @@ function getImports() {
     imports.wbg.__wbindgen_throw = function(arg0, arg1) {
         throw new Error(getStringFromWasm0(arg0, arg1));
     };
-    imports.wbg.__wbindgen_closure_wrapper2160 = function(arg0, arg1, arg2) {
-        const ret = makeClosure(arg0, arg1, 144, __wbg_adapter_18);
+    imports.wbg.__wbindgen_closure_wrapper2291 = function(arg0, arg1, arg2) {
+        const ret = makeClosure(arg0, arg1, 154, __wbg_adapter_18);
         return addHeapObject(ret);
     };
 
@@ -534,7 +527,7 @@ function initSync(module) {
 
 async function init(input) {
     if (typeof input === 'undefined') {
-        input = new URL('RSA-15eea98ee3ddf315_bg.wasm', import.meta.url);
+        input = new URL('RSA-db93ea1b2ce8c435_bg.wasm', import.meta.url);
     }
     const imports = getImports();
 

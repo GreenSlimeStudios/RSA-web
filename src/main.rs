@@ -1,3 +1,5 @@
+use wasm_bindgen::*;
+use web_sys::HtmlInputElement;
 use yew::prelude::*;
 // fn main() {
 //     let args: Vec<String> = std::env::args().skip(1).collect();
@@ -103,7 +105,7 @@ impl Component for CounterComponent {
     }
 }
 enum NavMsg {
-    Sussy,
+    Nothin,
 }
 struct NavComponent;
 impl Component for NavComponent {
@@ -134,11 +136,11 @@ struct MainPageComponent;
 impl Component for MainPageComponent {
     type Message = MainPageMsg;
     type Properties = ();
-    fn create(ctx: &Context<Self>) -> Self {
+    fn create(_ctx: &Context<Self>) -> Self {
         Self {}
     }
     fn view(&self, ctx: &Context<Self>) -> Html {
-        let link = ctx.link();
+        // let link = ctx.link();
         html! {
             <div>
                 <NavComponent/>
@@ -149,35 +151,43 @@ impl Component for MainPageComponent {
     }
 }
 fn main() {
+    // println!("{:?}", encrypt("TAJNE!".to_string(), 187, 3));
     yew::start_app::<MainPageComponent>();
 }
 enum RsaMsg {
-    N(u32),
-    E(u32),
+    // N(u32),
+    // E(u32),
     UpdateN(u32),
     UpdateE(u32),
+    UpdateMessage(String),
+    Encrypt,
 }
 struct RsaComponent {
     n: u32,
     e: u32,
-    phi: u32,
-    l: u32,
+    message: String,
+    nums: Vec<u32>, // phi: u32,
+                    // l: u32,
 }
 impl Component for RsaComponent {
     type Message = RsaMsg;
     type Properties = ();
-    fn create(ctx: &Context<Self>) -> Self {
+    fn create(_ctx: &Context<Self>) -> Self {
         Self {
-            phi: 0,
+            // phi: 0,
             n: 0,
             e: 0,
-            l: 1,
+            message: String::new(),
+            // nums: vec![1, 2, 3, 4, 5],
+            nums: Vec::new(), // l: 1,
         }
     }
-    fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
+    fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
             RsaMsg::UpdateN(content) => self.n = content,
             RsaMsg::UpdateE(content) => self.e = content,
+            RsaMsg::UpdateMessage(content) => self.message = content,
+            RsaMsg::Encrypt => self.nums = encrypt(self.message.clone(), self.n, self.e),
             _ => (),
         }
         true
@@ -197,10 +207,23 @@ impl Component for RsaComponent {
                     </div>
                 </div>
                 <div class = "row">
-                    <input type="number" oninput={link.callback(|event:InputEvent| RsaMsg::UpdateN(event.data().unwrap().parse::<u32>().unwrap()))}/>
-                    <input type="number" oninput={link.callback(|event:InputEvent| RsaMsg::UpdateE(event.data().unwrap().parse::<u32>().unwrap()))}/>
+                    <input type="number" placeholder="enter N" onchange={link.callback(|event:Event| RsaMsg::UpdateN(event.target().unwrap().unchecked_into::<HtmlInputElement>().value().parse::<u32>().unwrap()))}/>
+                    <input type="number" placeholder="enter E" onchange={link.callback(|event:Event| RsaMsg::UpdateE(event.target().unwrap().unchecked_into::<HtmlInputElement>().value().parse::<u32>().unwrap()))}/>
+                    <input type="text" placeholder="enter secret message" onchange={link.callback(|event:Event| RsaMsg::UpdateMessage(event.target().unwrap().unchecked_into::<HtmlInputElement>().value()))}/>
                 </div>
+                <button onclick={link.callback(|_|RsaMsg::Encrypt)}>{"ENCRYPT"}</button>
+                <p>{self.nums.clone()}</p>
             </div>
         }
     }
+}
+fn encrypt(text: String, n: u32, e: u32) -> Vec<u32> {
+    let mut nums: Vec<u32> = Vec::new();
+    // nums.push(69);
+    for letter in text.chars() {
+        let d = ((letter as u32).pow(e)) % n;
+        // println!("{} - {}", letter, d);
+        nums.push(d);
+    }
+    nums
 }
