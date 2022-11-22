@@ -19,11 +19,11 @@ use yew::prelude::*;
 //     println!("phi: {}", get_phi_2(n));
 // }
 // Pierwsza metoda na obliczenie phi
-fn get_phi(n: u32) -> u32 {
-    let nums = get_nums(n);
+fn _get_phi(n: u32) -> u32 {
+    let nums = _get_nums(n);
     nums.len() as u32
 }
-fn get_nums(n: u32) -> Vec<u32> {
+fn _get_nums(n: u32) -> Vec<u32> {
     let mut nums: Vec<u32> = vec![1];
     for i in 2..n {
         let mut has_common_divider = false;
@@ -42,14 +42,14 @@ fn get_nums(n: u32) -> Vec<u32> {
     nums
 }
 // Druga metoda na obliczenie phi
-fn get_phi_2(n: u32) -> u32 {
-    let primes = get_primes(n);
+fn _get_phi_2(n: u32) -> u32 {
+    let primes = _get_primes(n);
     if primes.len() != 2 {
         println!("n is not acceptable");
     }
     (primes[0] - 1) * (primes[1] - 1)
 }
-fn get_primes(n: u32) -> Vec<u32> {
+fn _get_primes(n: u32) -> Vec<u32> {
     let mut primes: Vec<u32> = Vec::new();
     let mut x = n;
     while x != 1 {
@@ -64,45 +64,7 @@ fn get_primes(n: u32) -> Vec<u32> {
     primes
 }
 
-struct CounterComponent {
-    count: i64,
-}
-enum Msg {
-    AddOne,
-}
-impl Component for CounterComponent {
-    type Message = Msg;
-    type Properties = ();
-
-    fn create(_ctx: &Context<Self>) -> Self {
-        Self { count: 0 }
-    }
-    fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
-        match msg {
-            Msg::AddOne => {
-                self.count += 1;
-                true
-            } // _ => false,
-        }
-    }
-
-    fn changed(&mut self, _ctx: &Context<Self>) -> bool {
-        true
-    }
-
-    fn view(&self, ctx: &Context<Self>) -> Html {
-        let link = ctx.link();
-        html! {
-            <div class="container">
-                <p> {self.count} </p>
-                <button onclick={link.callback(|_|Msg::AddOne)}>{"+1"}</button>
-            </div>
-        }
-    }
-}
-enum NavMsg {
-    Nothin,
-}
+enum NavMsg {}
 struct NavComponent;
 impl Component for NavComponent {
     type Message = NavMsg;
@@ -113,8 +75,7 @@ impl Component for NavComponent {
         Self {}
     }
 
-    fn view(&self, ctx: &Context<Self>) -> Html {
-        let link = ctx.link();
+    fn view(&self, _ctx: &Context<Self>) -> Html {
         html! {
             <div>
                 <div class="navbar">
@@ -124,9 +85,7 @@ impl Component for NavComponent {
         }
     }
 }
-enum MainPageMsg {
-    Good,
-}
+enum MainPageMsg {}
 struct MainPageComponent;
 impl Component for MainPageComponent {
     type Message = MainPageMsg;
@@ -134,12 +93,11 @@ impl Component for MainPageComponent {
     fn create(_ctx: &Context<Self>) -> Self {
         Self {}
     }
-    fn view(&self, ctx: &Context<Self>) -> Html {
+    fn view(&self, _ctx: &Context<Self>) -> Html {
         // let link = ctx.link();
         html! {
             <div>
                 <NavComponent/>
-                // <CounterComponent/>
                 <RsaComponent/>
             </div>
         }
@@ -172,7 +130,7 @@ impl Component for RsaComponent {
             n: 0,
             e: 0,
             message: String::new(),
-            encrypted_message: String::new(),
+            encrypted_message: "TU BĘDZIE ODPOWIEDŹ".to_string(),
             nums: Vec::new(),
         }
     }
@@ -185,7 +143,6 @@ impl Component for RsaComponent {
                 self.nums = encrypt(self.message.clone(), self.n, self.e);
                 self.encrypted_message = refactor(&self.nums);
             }
-            _ => (),
         }
         true
     }
@@ -213,7 +170,7 @@ impl Component for RsaComponent {
                 </div>
                     <input type="text" class="text-input" placeholder="enter secret message" onchange={link.callback(|event:Event| RsaMsg::UpdateMessage(event.target().unwrap().unchecked_into::<HtmlInputElement>().value()))}/>
                 <button onclick={link.callback(|_|RsaMsg::Encrypt)}>{"ENCRYPT"}</button>
-                <p>{self.encrypted_message.clone()}</p>
+                <p class="result">{self.encrypted_message.clone()}</p>
             </div>
         }
     }
@@ -230,7 +187,7 @@ fn refactor(nums: &[u32]) -> String {
 fn encrypt(text: String, n: u32, e: u32) -> Vec<u32> {
     let mut nums: Vec<u32> = Vec::new();
     for letter in text.chars() {
-        let d = ((letter as u32).pow(e)) % n;
+        let d: u32 = ((letter as u128).pow(e) % n as u128) as u32;
         nums.push(d);
     }
     nums
