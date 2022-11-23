@@ -153,11 +153,19 @@ impl Component for RsaComponent {
             RsaMsg::UpdateE(content) => self.e = content,
             RsaMsg::UpdateMessage(content) => self.message = content,
             RsaMsg::Encrypt => {
-                self.nums = encrypt(self.message.clone(), self.n, self.e);
+                let result = encrypt(self.message.clone(), self.n, self.e);
+                self.nums = result.0;
+                if result.1 {
+                    self.hint = "WARNING: stack overflow on calculating to the power".to_string();
+                }
                 self.encrypted_message = refactor(&self.nums);
             }
             RsaMsg::Decrypt => {
-                log!(decrypt(&self.nums, self.n, self.e));
+                let result = decrypt(&self.nums, self.n, self.e);
+                log!(result.0);
+                if result.1 {
+                    self.hint = "WARNING: stack overflow on calculating to the power".to_string();
+                }
             }
         }
         true
@@ -202,32 +210,35 @@ fn refactor(nums: &[u32]) -> String {
     }
     message
 }
-fn encrypt(text: String, n: u32, e: u32) -> Vec<u32> {
+fn encrypt(text: String, n: u32, e: u32) -> (Vec<u32>, bool) {
     let mut nums: Vec<u32> = Vec::new();
+    let mut p: (u128, bool) = (1, false);
     for letter in text.chars() {
         log!(letter as u32);
-        let c: u32 = ((letter as u128).pow(e) % n as u128) as u32;
+        p = (letter as u128).overflowing_pow(e);
+        let c: u32 = (p.0 % n as u128) as u32;
         nums.push(c);
     }
     // log!((('A' as u32) as u8 as char).to_string());
-    nums
+    (nums, p.1)
 }
-fn decrypt(nums: &[u32], n: u32, e: u32) -> String {
+fn decrypt(nums: &[u32], n: u32, e: u32) -> (String, bool) {
     let mut out = String::new();
     let d = get_d(n, e);
     log!("d is equal to");
     log!(d);
+    let mut p: (u128, bool) = (1, false);
     for i in 0..nums.len() {
-        log!(nums[i] as u128);
-        let p = nums[i].pow(d);
-        log!(p);
-        let m = (nums[i] as u128).pow(d) % n as u128;
+        // log!(nums[i] as u128);
+        p = (nums[i] as u128).overflowing_pow(d);
+        // log!(p);
+        let m = p.0 % n as u128;
         // log!(num.clone());
-        // log!(m as u32);
         log!("gut");
+        log!(m as u32);
         out += &((m as u8) as char).to_string();
     }
-    out
+    (out, p.1)
 }
 fn get_d(n: u32, e: u32) -> u32 {
     let mut out: u32 = 1;
