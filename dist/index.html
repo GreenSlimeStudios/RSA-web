@@ -3,14 +3,37 @@
     <title>Szyfrowanie RSA</title>
     
 	<link rel="stylesheet" href="/style-ac5981b486df66b2.css">
+<!--     <!-1- <link data-trunk rel="scss" href="dist/index.scss"/> -1-> -->
   
-<link rel="preload" href="/RSA-bb54b220c531ce1a_bg.wasm" as="fetch" type="application/wasm" crossorigin="">
-<link rel="modulepreload" href="/RSA-bb54b220c531ce1a.js"></head>
+<link rel="preload" href="/RSA-6a0740a1ded1cf68_bg.wasm" as="fetch" type="application/wasm" crossorigin="">
+<link rel="modulepreload" href="/RSA-6a0740a1ded1cf68.js"></head>
 <body>
 
+<script type="module">import init from '/RSA-6a0740a1ded1cf68.js';init('/RSA-6a0740a1ded1cf68_bg.wasm');</script><script>(function () {
+    var protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    var url = protocol + '//' + window.location.host + '/_trunk/ws';
+    var poll_interval = 5000;
+    var reload_upon_connect = () => {
+        window.setTimeout(
+            () => {
+                // when we successfully reconnect, we'll force a
+                // reload (since we presumably lost connection to
+                // trunk due to it being killed, so it will have
+                // rebuilt on restart)
+                var ws = new WebSocket(url);
+                ws.onopen = () => window.location.reload();
+                ws.onclose = reload_upon_connect;
+            },
+            poll_interval);
+    };
 
-
-
-
-
-<script type="module">import init from '/RSA-bb54b220c531ce1a.js';init('/RSA-bb54b220c531ce1a_bg.wasm');</script></body></html><!-- <html> --><!--   <head> --><!--     <!-1- <link data-trunk rel="scss" href="dist/index.scss"/> -1-> --><!--   </head> --><!-- </html> -->
+    var ws = new WebSocket(url);
+    ws.onmessage = (ev) => {
+        const msg = JSON.parse(ev.data);
+        if (msg.reload) {
+            window.location.reload();
+        }
+    };
+    ws.onclose = reload_upon_connect;
+})()
+</script></body></html>

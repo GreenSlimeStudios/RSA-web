@@ -1,3 +1,4 @@
+use gloo_console::log;
 use wasm_bindgen::*;
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
@@ -19,11 +20,11 @@ use yew::prelude::*;
 //     println!("phi: {}", get_phi_2(n));
 // }
 // Pierwsza metoda na obliczenie phi
-fn _get_phi(n: u32) -> u32 {
-    let nums = _get_nums(n);
+fn get_phi(n: u32) -> u32 {
+    let nums = get_nums(n);
     nums.len() as u32
 }
-fn _get_nums(n: u32) -> Vec<u32> {
+fn get_nums(n: u32) -> Vec<u32> {
     let mut nums: Vec<u32> = vec![1];
     for i in 2..n {
         let mut has_common_divider = false;
@@ -42,14 +43,14 @@ fn _get_nums(n: u32) -> Vec<u32> {
     nums
 }
 // Druga metoda na obliczenie phi
-fn _get_phi_2(n: u32) -> u32 {
-    let primes = _get_primes(n);
+fn get_phi_2(n: u32) -> u32 {
+    let primes = get_primes(n);
     if primes.len() != 2 {
         println!("n is not acceptable");
     }
     (primes[0] - 1) * (primes[1] - 1)
 }
-fn _get_primes(n: u32) -> Vec<u32> {
+fn get_primes(n: u32) -> Vec<u32> {
     let mut primes: Vec<u32> = Vec::new();
     let mut x = n;
     while x != 1 {
@@ -111,6 +112,7 @@ enum RsaMsg {
     UpdateE(u32),
     UpdateMessage(String),
     Encrypt,
+    Decrypt,
 }
 struct RsaComponent {
     n: u32,
@@ -118,6 +120,7 @@ struct RsaComponent {
     message: String,
     nums: Vec<u32>,
     encrypted_message: String,
+    hint: String,
     // phi: u32,
     // l: u32,
 }
@@ -132,16 +135,29 @@ impl Component for RsaComponent {
             message: String::new(),
             encrypted_message: "TU BĘDZIE ODPOWIEDŹ".to_string(),
             nums: Vec::new(),
+            hint: String::new(),
         }
     }
     fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
-            RsaMsg::UpdateN(content) => self.n = content,
+            RsaMsg::UpdateN(content) => {
+                self.n = content;
+                if get_primes(content).len() == 2 {
+                    self.e = find_e(content);
+                    self.hint = String::new();
+                } else {
+                    self.hint =
+                        "N is not made out of two prime numbers, E cannot be found".to_string();
+                }
+            }
             RsaMsg::UpdateE(content) => self.e = content,
             RsaMsg::UpdateMessage(content) => self.message = content,
             RsaMsg::Encrypt => {
                 self.nums = encrypt(self.message.clone(), self.n, self.e);
                 self.encrypted_message = refactor(&self.nums);
+            }
+            RsaMsg::Decrypt => {
+                log!(decrypt(&self.nums, self.n, self.e));
             }
         }
         true
@@ -151,6 +167,7 @@ impl Component for RsaComponent {
         html! {
             <div class="RSA">
                 <p class="title">{"SZYFROWANIE"}</p>
+                <p class="hint">{self.hint.clone()}</p>
                 <div class="row nums">
                     <div class="indicator">
                         <p>{"N:"}</p>
@@ -171,6 +188,7 @@ impl Component for RsaComponent {
                     <input type="text" class="text-input" placeholder="enter secret message" onchange={link.callback(|event:Event| RsaMsg::UpdateMessage(event.target().unwrap().unchecked_into::<HtmlInputElement>().value()))}/>
                 <button onclick={link.callback(|_|RsaMsg::Encrypt)}>{"ENCRYPT"}</button>
                 <p class="result">{self.encrypted_message.clone()}</p>
+                <button onclick={link.callback(|_|RsaMsg::Decrypt)}>{"DECRYPT"}</button>
             </div>
         }
     }
@@ -187,8 +205,49 @@ fn refactor(nums: &[u32]) -> String {
 fn encrypt(text: String, n: u32, e: u32) -> Vec<u32> {
     let mut nums: Vec<u32> = Vec::new();
     for letter in text.chars() {
-        let d: u32 = ((letter as u128).pow(e) % n as u128) as u32;
-        nums.push(d);
+        log!(letter as u32);
+        let c: u32 = ((letter as u128).pow(e) % n as u128) as u32;
+        nums.push(c);
     }
+    // log!((('A' as u32) as u8 as char).to_string());
     nums
+}
+fn decrypt(nums: &[u32], n: u32, e: u32) -> String {
+    let mut out = String::new();
+    let d = get_d(n, e);
+    log!("d is equal to");
+    log!(d);
+    for i in 0..nums.len() {
+        log!(nums[i] as u128);
+        let p = nums[i].pow(d);
+        log!(p);
+        let m = (nums[i] as u128).pow(d) % n as u128;
+        // log!(num.clone());
+        // log!(m as u32);
+        log!("gut");
+        out += &((m as u8) as char).to_string();
+    }
+    out
+}
+fn get_d(n: u32, e: u32) -> u32 {
+    let mut out: u32 = 1;
+    for d in 0..=n {
+        if (d * e) % get_phi_2(n) == 1 {
+            out = d;
+        }
+    }
+    out
+}
+fn find_e(n: u32) -> u32 {
+    let mut e: u32 = 2;
+    let phi = get_phi_2(n);
+    let coprime_n = get_nums(n);
+    let coprime_phi = get_nums(phi);
+
+    for i in 2..phi {
+        if coprime_n.contains(&i) && coprime_phi.contains(&i) {
+            e = i;
+        }
+    }
+    e
 }
