@@ -532,7 +532,7 @@ function initSync(module) {
 
 async function init(input) {
     if (typeof input === 'undefined') {
-        input = new URL('RSA-63555f03f1005d5c_bg.wasm', import.meta.url);
+        input = new URL('RSA-bfe2ba6cc79c9532_bg.wasm', import.meta.url);
     }
     const imports = getImports();
 
