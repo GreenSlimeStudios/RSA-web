@@ -177,6 +177,7 @@ impl Component for RsaComponent {
 struct DecryptComponent {
     n: u32,
     e: u32,
+    d: u32,
     nums: Vec<u32>,
     decrypted_message: String,
     hint: String,
@@ -193,6 +194,7 @@ impl Component for DecryptComponent {
     type Properties = ();
     fn create(_ctx: &Context<Self>) -> Self {
         Self {
+            d: 0,
             n: 0,
             e: 0,
             decrypted_message: "TU BĘDZIE ODPOWIEDŹ".to_string(),
@@ -207,13 +209,17 @@ impl Component for DecryptComponent {
                 self.n = content;
                 if get_primes(content).len() == 2 {
                     self.e = find_e(content);
+                    self.d = get_d(self.n, self.e);
                     self.hint = String::new();
                 } else {
                     self.hint =
                         "N is not made out of two prime numbers, E cannot be found".to_string();
                 }
             }
-            DecryptMsg::UpdateE(content) => self.e = content,
+            DecryptMsg::UpdateE(content) => {
+                self.e = content;
+                self.d = get_d(self.n, self.e);
+            }
             DecryptMsg::UpdateDigits(content) => {
                 self.hint2 = "".to_string();
                 self.nums = content
@@ -228,7 +234,8 @@ impl Component for DecryptComponent {
                     .collect()
             }
             DecryptMsg::Decrypt => {
-                let result = decrypt(&self.nums, self.n, self.e);
+                self.d = get_d(self.n, self.e);
+                let result = decrypt(&self.nums, self.n, self.d);
                 self.decrypted_message = result.0.clone();
                 log!(result.0);
                 if result.1 {
@@ -253,6 +260,10 @@ impl Component for DecryptComponent {
                     <div class="indicator">
                         <p>{"E:"}</p>
                         <p>{self.e}</p>
+                    </div>
+                    <div class="indicator">
+                        <p>{"D:"}</p>
+                        <p>{self.d}</p>
                     </div>
                 </div>
 
@@ -292,9 +303,8 @@ fn encrypt(text: String, n: u32, e: u32) -> (Vec<u32>, bool) {
     // log!((('A' as u32) as u8 as char).to_string());
     (nums, p.1)
 }
-fn decrypt(nums: &[u32], n: u32, e: u32) -> (String, bool) {
+fn decrypt(nums: &[u32], n: u32, d: u32) -> (String, bool) {
     let mut out = String::new();
-    let d = get_d(n, e);
     log!("d is equal to");
     log!(d);
     let mut p: (u128, bool) = (1, false);
