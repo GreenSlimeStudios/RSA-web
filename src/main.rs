@@ -107,6 +107,7 @@ struct RsaComponent {
     nums: Vec<u32>,
     encrypted_message: String,
     hint: String,
+    hint2: String,
     offset: u8,
 }
 impl Component for RsaComponent {
@@ -120,6 +121,7 @@ impl Component for RsaComponent {
             encrypted_message: "TU BĘDZIE ODPOWIEDŹ".to_string(),
             nums: Vec::new(),
             hint: String::new(),
+            hint2: String::new(),
             offset: 60,
         }
     }
@@ -143,6 +145,13 @@ impl Component for RsaComponent {
                 self.nums = result.0;
                 if result.1 {
                     self.hint = "WARNING: stack overflow on calculating to the power".to_string();
+                } else {
+                    self.hint = String::new();
+                }
+                if result.2 {
+                    self.hint2 = "WARNING: offset to large failed to subtract".to_string();
+                } else {
+                    self.hint2 = String::new();
                 }
                 self.encrypted_message = refactor(&self.nums);
             }
@@ -154,6 +163,7 @@ impl Component for RsaComponent {
         html! {
             <div class="RSA">
                 <p class="title">{"SZYFROWANIE"}</p>
+                <p class="hint">{self.hint2.clone()}</p>
                 <p class="hint">{self.hint.clone()}</p>
                 <div class="row nums">
                     <div class="indicator">
@@ -228,7 +238,8 @@ impl Component for DecryptComponent {
                     self.hint = String::new();
                 } else {
                     self.hint =
-                        "N is not made out of two prime numbers, E cannot be found".to_string();
+                        "WARNING: N is not made out of two prime numbers, E cannot be found"
+                            .to_string();
                 }
             }
             DecryptMsg::UpdateE(content) => {
@@ -313,34 +324,36 @@ fn refactor(nums: &[u32]) -> String {
     }
     message
 }
-fn encrypt(text: String, n: u32, e: u32, offset: u8) -> (Vec<u32>, bool) {
+fn encrypt(text: String, n: u32, e: u32, offset: u8) -> (Vec<u32>, bool, bool) {
     let mut nums: Vec<u32> = Vec::new();
-    let mut p: (u128, bool) = (1, false);
+    let mut powered: (u128, bool) = (1, false);
+    let mut subed: (u128, bool) = (1, false);
     for letter in text.chars() {
         log!(letter as u32);
-        p = (letter as u128 - offset as u128).overflowing_pow(e);
-        let c: u32 = (p.0 % n as u128) as u32;
+        subed = (letter as u128).overflowing_sub(offset as u128);
+        powered = subed.0.overflowing_pow(e);
+        let c: u32 = (powered.0 % n as u128) as u32;
         nums.push(c);
     }
     // log!((('A' as u32) as u8 as char).to_string());
-    (nums, p.1)
+    (nums, powered.1, subed.1)
 }
 fn decrypt(nums: &[u32], n: u32, d: u32, offset: u8) -> (String, bool) {
     let mut out = String::new();
     log!("d is equal to");
     log!(d);
-    let mut p: (u128, bool) = (1, false);
+    let mut powered: (u128, bool) = (1, false);
     for i in 0..nums.len() {
         // log!(nums[i] as u128);
-        p = (nums[i] as u128).overflowing_pow(d);
+        powered = (nums[i] as u128).overflowing_pow(d);
         // log!(p);
-        let m = p.0 % n as u128;
+        let m = powered.0 % n as u128;
         // log!(num.clone());
         log!("gut");
         log!(m as u32);
         out += &((m as u8 + offset) as char).to_string();
     }
-    (out, p.1)
+    (out, powered.1)
 }
 fn get_d(n: u32, e: u32) -> u32 {
     let mut out: u32 = 1;
