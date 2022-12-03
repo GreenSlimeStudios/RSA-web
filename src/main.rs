@@ -3,6 +3,8 @@ use wasm_bindgen::*;
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 
+// const offset: u8 = 60;
+
 fn get_phi(n: u32) -> u32 {
     let nums = get_nums(n);
     nums.len() as u32
@@ -95,6 +97,7 @@ enum RsaMsg {
     UpdateN(u32),
     UpdateE(u32),
     UpdateMessage(String),
+    UpdateOffset(u8),
     Encrypt,
 }
 struct RsaComponent {
@@ -104,6 +107,7 @@ struct RsaComponent {
     nums: Vec<u32>,
     encrypted_message: String,
     hint: String,
+    offset: u8,
 }
 impl Component for RsaComponent {
     type Message = RsaMsg;
@@ -116,6 +120,7 @@ impl Component for RsaComponent {
             encrypted_message: "TU BĘDZIE ODPOWIEDŹ".to_string(),
             nums: Vec::new(),
             hint: String::new(),
+            offset: 60,
         }
     }
     fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
@@ -130,10 +135,11 @@ impl Component for RsaComponent {
                         "N is not made out of two prime numbers, E cannot be found".to_string();
                 }
             }
+            RsaMsg::UpdateOffset(content) => self.offset = content,
             RsaMsg::UpdateE(content) => self.e = content,
             RsaMsg::UpdateMessage(content) => self.message = content,
             RsaMsg::Encrypt => {
-                let result = encrypt(self.message.clone(), self.n, self.e);
+                let result = encrypt(self.message.clone(), self.n, self.e, self.offset);
                 self.nums = result.0;
                 if result.1 {
                     self.hint = "WARNING: stack overflow on calculating to the power".to_string();
@@ -158,6 +164,10 @@ impl Component for RsaComponent {
                         <p>{"E:"}</p>
                         <p>{self.e}</p>
                     </div>
+                    <div class="indicator">
+                        <p>{"Offset:"}</p>
+                        <p>{self.offset}</p>
+                    </div>
                 </div>
 
                 <div class = "row">
@@ -165,6 +175,8 @@ impl Component for RsaComponent {
                     <input type="number" class="number-input" placeholder="enter N" onchange={link.callback(|event:Event| RsaMsg::UpdateN(event.target().unwrap().unchecked_into::<HtmlInputElement>().value().parse::<u32>().unwrap()))}/>
                     <p>{"E"}</p>
                     <input type="number" class="number-input" placeholder="enter E" onchange={link.callback(|event:Event| RsaMsg::UpdateE(event.target().unwrap().unchecked_into::<HtmlInputElement>().value().parse::<u32>().unwrap()))}/>
+                    <p>{"Offset"}</p>
+                    <input type="number" class="number-input" placeholder="offset" onchange={link.callback(|event:Event| RsaMsg::UpdateOffset(event.target().unwrap().unchecked_into::<HtmlInputElement>().value().parse::<u8>().unwrap()))}/>
                 </div>
                     <input type="text" class="text-input" placeholder="enter secret message" onchange={link.callback(|event:Event| RsaMsg::UpdateMessage(event.target().unwrap().unchecked_into::<HtmlInputElement>().value()))}/>
                 <button onclick={link.callback(|_|RsaMsg::Encrypt)}>{"ENCRYPT"}</button>
@@ -182,11 +194,13 @@ struct DecryptComponent {
     decrypted_message: String,
     hint: String,
     hint2: String,
+    offset: u8,
 }
 enum DecryptMsg {
     UpdateN(u32),
     UpdateE(u32),
     UpdateDigits(String),
+    UpdateOffset(u8),
     Decrypt,
 }
 impl Component for DecryptComponent {
@@ -201,6 +215,7 @@ impl Component for DecryptComponent {
             nums: Vec::new(),
             hint: String::new(),
             hint2: String::new(),
+            offset: 60,
         }
     }
     fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
@@ -220,6 +235,7 @@ impl Component for DecryptComponent {
                 self.e = content;
                 self.d = get_d(self.n, self.e);
             }
+            DecryptMsg::UpdateOffset(content) => self.offset = content,
             DecryptMsg::UpdateDigits(content) => {
                 self.hint2 = "".to_string();
                 self.nums = content
@@ -235,7 +251,7 @@ impl Component for DecryptComponent {
             }
             DecryptMsg::Decrypt => {
                 self.d = get_d(self.n, self.e);
-                let result = decrypt(&self.nums, self.n, self.d);
+                let result = decrypt(&self.nums, self.n, self.d, self.offset);
                 self.decrypted_message = result.0.clone();
                 log!(result.0);
                 if result.1 {
@@ -262,6 +278,10 @@ impl Component for DecryptComponent {
                         <p>{self.e}</p>
                     </div>
                     <div class="indicator">
+                        <p>{"Offset:"}</p>
+                        <p>{self.offset}</p>
+                    </div>
+                    <div class="indicator">
                         <p>{"D:"}</p>
                         <p>{self.d}</p>
                     </div>
@@ -272,6 +292,8 @@ impl Component for DecryptComponent {
                     <input type="number" class="number-input" placeholder="enter N" onchange={link.callback(|event:Event| DecryptMsg::UpdateN(event.target().unwrap().unchecked_into::<HtmlInputElement>().value().parse::<u32>().unwrap()))}/>
                     <p>{"E"}</p>
                     <input type="number" class="number-input" placeholder="enter E" onchange={link.callback(|event:Event| DecryptMsg::UpdateE(event.target().unwrap().unchecked_into::<HtmlInputElement>().value().parse::<u32>().unwrap()))}/>
+                    <p>{"Offset"}</p>
+                    <input type="number" class="number-input" placeholder="offset" onchange={link.callback(|event:Event| DecryptMsg::UpdateOffset(event.target().unwrap().unchecked_into::<HtmlInputElement>().value().parse::<u8>().unwrap()))}/>
                 </div>
                     <input type="text" class="text-input" placeholder="enter secret code" onchange={link.callback(|event:Event| DecryptMsg::UpdateDigits(event.target().unwrap().unchecked_into::<HtmlInputElement>().value()))}/>
                 <button onclick={link.callback(|_|DecryptMsg::Decrypt)}>{"DECRYPT"}</button>
@@ -291,19 +313,19 @@ fn refactor(nums: &[u32]) -> String {
     }
     message
 }
-fn encrypt(text: String, n: u32, e: u32) -> (Vec<u32>, bool) {
+fn encrypt(text: String, n: u32, e: u32, offset: u8) -> (Vec<u32>, bool) {
     let mut nums: Vec<u32> = Vec::new();
     let mut p: (u128, bool) = (1, false);
     for letter in text.chars() {
         log!(letter as u32);
-        p = (letter as u128).overflowing_pow(e);
+        p = (letter as u128 - offset as u128).overflowing_pow(e);
         let c: u32 = (p.0 % n as u128) as u32;
         nums.push(c);
     }
     // log!((('A' as u32) as u8 as char).to_string());
     (nums, p.1)
 }
-fn decrypt(nums: &[u32], n: u32, d: u32) -> (String, bool) {
+fn decrypt(nums: &[u32], n: u32, d: u32, offset: u8) -> (String, bool) {
     let mut out = String::new();
     log!("d is equal to");
     log!(d);
@@ -316,7 +338,7 @@ fn decrypt(nums: &[u32], n: u32, d: u32) -> (String, bool) {
         // log!(num.clone());
         log!("gut");
         log!(m as u32);
-        out += &((m as u8) as char).to_string();
+        out += &((m as u8 + offset) as char).to_string();
     }
     (out, p.1)
 }
